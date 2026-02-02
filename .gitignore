@@ -1,0 +1,16 @@
+# Секреты — не коммитить
+.env
+
+# Зависимости — ставить из requirements или вручную
+dependencies/
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

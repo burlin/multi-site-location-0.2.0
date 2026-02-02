@@ -1,0 +1,12 @@
+locations:
+    "{{USER_NAME}}.local":
+        prefix:
+            # linux: "/remote/location/local"
+            win32: "D:\\FtrackLoc\\FtrackLocal"
+            # darwin: "/Volumes/FtrackLocal"
+        priority: 1
+    "x.local":
+        prefix:
+            # linux: "/remote/location/server"
+            win32: "D:\\FtrackLoc\\FtrackServer"
+        priority: 100

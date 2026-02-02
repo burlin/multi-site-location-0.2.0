@@ -1,0 +1,20 @@
+locations:
+    "burlin.local":
+        prefix:
+            # linux: "/remote/location/local"
+            win32: "x:\\proj"
+            # darwin: "/Volumes/FtrackLocal"
+        priority: 1
+        
+    "burlin.backup":
+        prefix:
+            # linux: "/remote/location/local"
+            win32: "b:\\ftrack_prj_backup"
+            # darwin: "/Volumes/FtrackLocal"
+        priority: 10
+                
+    "x.local":
+        prefix:
+            # linux: "/remote/location/server"
+            win32: "Z:\\proj"
+        priority: 100
