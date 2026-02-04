@@ -38,13 +38,15 @@ def get_hostname() -> str:
                 os.environ.get('HOSTNAME', 'unknown'))
             
 def load_location_config(config_path: Path, user_name: Optional[str]) -> dict[str, Any]:
-    """Load and parse location configuration from YAML file with Jinja template support
+    """Load and parse location configuration from YAML file with Jinja template support.
     
-    Args:
-        config_path: Path to the YAML configuration file
-        
-    Returns:
-        dict: Parsed configuration with resolved templates
+    Important:
+        - We treat location names as *keys* in the ``locations`` mapping.
+        - After Jinja+YAML, some keys may end up as ``''``/whitespace or even ``None``
+          (например, если env‑переменная в шаблоне пустая).
+        - Такие записи мы отбрасываем ЗДЕСЬ, чтобы далее в код не просочился
+          пустой Location.name, который приводит к IntegrityError
+          ``Duplicate entry '' for key 'name'`` на сервере.
     """
     # Read the YAML file
     with open(config_path, 'r') as f:
@@ -65,9 +67,26 @@ def load_location_config(config_path: Path, user_name: Optional[str]) -> dict[st
     }
     
     rendered_yaml = template.render(**template_vars)
-    config = yaml.safe_load(rendered_yaml)
-    logger.debug(f'Loaded configuration with resolved templates: {config}')
-    return config.get('locations', {})
+    config = yaml.safe_load(rendered_yaml) or {}
+    raw_locations = config.get('locations', {}) or {}
+    
+    cleaned_locations: dict[str, Any] = {}
+    for raw_name, location_data in raw_locations.items():
+        # Normalize key to a clean string
+        name = (str(raw_name) if raw_name is not None else '').strip()
+        if not name:
+            logger.warning(
+                "Skipping location with empty/invalid name in %s "
+                "(key=%r, data=%r) to avoid IntegrityError for Location.name.",
+                config_path,
+                raw_name,
+                location_data,
+            )
+            continue
+        cleaned_locations[name] = location_data or {}
+    
+    logger.debug('Loaded configuration with resolved templates. Locations: %s', cleaned_locations)
+    return cleaned_locations
 
 def session_add_user_location(
     session: ftrack_api.Session, 
@@ -81,6 +100,13 @@ def session_add_user_location(
     """
     index = itertools.count()
     for location_name, location_data in location_setup.items():
+        location_name = (location_name or '').strip()
+        if not location_name:
+            logger.warning(
+                "Skipping location with empty name in config "
+                "(avoids IntegrityError 'Duplicate entry \"\" for key \"name\"')."
+            )
+            continue
         location = session.ensure('Location', {'name': location_name})
         prefix_data = location_data.get('prefix', {})
         location_path = prefix_data.get(sys.platform, '')

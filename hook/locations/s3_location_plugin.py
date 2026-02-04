@@ -63,20 +63,56 @@ def get_url_patch(self, resource_identifier=None):
 
 def session_add_s3_location(session: ftrack_api.Session) -> None:
     """Add S3 location to the session."""
+    location_name = (os.getenv('S3_LOCATION_NAME') or '').strip()
+    if not location_name:
+        logger.warning(
+            "S3_LOCATION_NAME is not set or empty; skipping S3 location "
+            "(avoids NullConstraintError/IntegrityError on server)."
+        )
+        return
+
+    # S3 bucket must be configured
+    bucket = (os.getenv("S3_BUCKET") or "").strip()
+    if not bucket:
+        logger.warning(
+            "S3_BUCKET is not set or empty; skipping S3 location "
+            "(no valid storage bucket configured)."
+        )
+        return
+
+    # Endpoint must be configured (MinIO / S3 API endpoint)
+    endpoint = _get_s3_api_endpoint()
+    if not endpoint:
+        logger.warning(
+            "S3_MINIO_ENDPOINT_URL / S3_MINIO_API_ENDPOINT_URL is not set; "
+            "skipping S3 location (no API endpoint)."
+        )
+        return
+
+    # If вообще нет никаких AWS/MinIO кредов — лучше не регистрировать Location,
+    # чтобы не плодить нерабочие локации в UI/сервере.
+    has_key = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    has_profile = bool(os.getenv("AWS_PROFILE"))
+    if not (has_key or has_profile):
+        logger.warning(
+            "No AWS credentials detected (AWS_ACCESS_KEY_ID / AWS_PROFILE not set); "
+            "skipping S3 location registration."
+        )
+        return
     s3_location = session.ensure(
         'Location', {
-            'name': os.getenv('S3_LOCATION_NAME')
+            'name': location_name
         }
     )
     s3_location.structure = ftrack_api.structure.standard.StandardStructure()
-    s3_accessor = S3Accessor(os.getenv('S3_BUCKET'))
+    s3_accessor = S3Accessor(bucket)
     s3_accessor.get_url = MethodType(get_url_patch, s3_accessor)
     
     # Override the s3 property by directly setting the _s3 attribute
     # This way the original property getter will return our custom boto3 resource
     s3_accessor._s3 = boto3.resource(
         "s3",
-        endpoint_url=_get_s3_api_endpoint(),
+        endpoint_url=endpoint,
         # Enable secure connection.
         use_ssl=True,
         verify=True,
@@ -86,8 +122,8 @@ def session_add_s3_location(session: ftrack_api.Session) -> None:
     s3_location.priority = 10
     logger.info(
         "Registered S3 location %s, pointing to: %s",
-        os.getenv("S3_LOCATION_NAME"),
-        _get_s3_api_endpoint(),
+        location_name,
+        endpoint,
     )
             
         
