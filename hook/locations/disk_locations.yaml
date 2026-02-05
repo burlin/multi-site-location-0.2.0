@@ -1,20 +1,20 @@
 locations:
-    "nalobin.local":
+    "burlin.local":
         prefix:
             # linux: "/remote/location/local"
-            win32: "d:\\proj"
+            win32: "x:\\proj"
             # darwin: "/Volumes/FtrackLocal"
         priority: 1
         
-    "nalobin.backup":
+    "burlin.backup":
         prefix:
             # linux: "/remote/location/local"
-            win32: "d:\\ftrack_prj_backup"
+            win32: "b:\\ftrack_prj_backup"
             # darwin: "/Volumes/FtrackLocal"
         priority: 10
                 
     "x.local":
         prefix:
             # linux: "/remote/location/server"
-            win32: "x:\\proj"
+            win32: "Z:\\proj"
         priority: 100

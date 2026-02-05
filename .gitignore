@@ -14,5 +14,5 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
-/hook/locations/disk_locations.yaml
-/hook/locations/disk_locations.yaml
+# Локальные пути — не наши локации, не коммитить
+hook/locations/disk_locations.yaml
