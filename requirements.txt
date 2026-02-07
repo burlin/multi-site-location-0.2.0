@@ -1,0 +1,28 @@
+# =============================================================================
+# multi-site-location — зависимости для S3 и user locations
+# =============================================================================
+#
+# Установка в папку dependencies (плагин добавляет её в sys.path):
+#
+#   pip install -r requirements.txt -t dependencies
+#
+# Примечание: ftrack-api обычно уже есть в ftrack Connect.
+# Для полного набора зависимостей (browser, input, publisher) см.
+# ftrack_plugins/ftrack_inout/requirements.txt
+#
+# =============================================================================
+
+# S3 accessor для multi-site
+ftrack-s3-accessor
+
+# AWS SDK
+boto3>=1.26.0
+
+# Конфиги YAML
+PyYAML>=5.0.0
+
+# Шаблоны Jinja2 (disk_locations.yaml)
+Jinja2>=3.0.0
+
+# .env переменные
+python-dotenv>=0.19.0
