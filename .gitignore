@@ -16,3 +16,4 @@ __pycache__/
 Thumbs.db
 # Локальные пути — не наши локации, не коммитить
 hook/locations/disk_locations.yaml
+/hook/locations/disk_locations.yaml
