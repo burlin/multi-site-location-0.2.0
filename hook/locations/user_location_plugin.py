@@ -27,6 +27,41 @@ from jinja2 import Template  # type: ignore # noqa: E402
 
 LOCATIONS_CONFIG_PATH = Path(__file__).parent / 'disk_locations.yaml'
 
+
+def get_location_config_path() -> Path:
+    """Resolve which config file to use for locations.
+    
+    Priority:
+    1. If $MROOT/config/mroya.yaml exists and contains 'locations:' key — use it
+    2. Otherwise use local disk_locations.yaml
+    
+    Returns:
+        Path to the YAML config file to load
+    """
+    mroot = os.environ.get('MROOT')
+    if mroot:
+        mroya_config = Path(mroot) / 'config' / 'mroya.yaml'
+        if mroya_config.exists():
+            try:
+                with open(mroya_config, 'r') as f:
+                    content = f.read()
+                config = yaml.safe_load(content) or {}
+                if config.get('locations') is not None:
+                    logger.debug(
+                        'Using centralized config from MROOT: %s',
+                        mroya_config
+                    )
+                    return mroya_config
+            except Exception as e:
+                logger.warning(
+                    'Failed to parse %s, falling back to disk_locations.yaml: %s',
+                    mroya_config,
+                    e
+                )
+    logger.debug('Using local config: %s', LOCATIONS_CONFIG_PATH)
+    return LOCATIONS_CONFIG_PATH
+
+
 def get_hostname() -> str:
     try:
         return socket.gethostname()
@@ -150,11 +185,12 @@ def configure_locations(
     user_name = session.api_user
     # If no location_setup provided, load from YAML
     if location_setup is None:
-        if not LOCATIONS_CONFIG_PATH.exists():
-            logger.error(f'Configuration file not found: {LOCATIONS_CONFIG_PATH}')
+        config_path = get_location_config_path()
+        if not config_path.exists():
+            logger.error(f'Configuration file not found: {config_path}')
             return
         location_setup = load_location_config(
-            config_path=LOCATIONS_CONFIG_PATH, 
+            config_path=config_path, 
             user_name=user_name
         )
         
@@ -194,7 +230,15 @@ def register(api_object, **kw):
     if not isinstance(api_object, ftrack_api.Session):
         return
     # Subscribe to the event hub
-    locations_dct = load_location_config(config_path=LOCATIONS_CONFIG_PATH, user_name=api_object.api_user)
+    config_path = get_location_config_path()
+    try:
+        locations_dct = load_location_config(config_path=config_path, user_name=api_object.api_user)
+    except FileNotFoundError:
+        logger.warning(
+            'Location config not found at %s, plugin will not register any locations',
+            config_path
+        )
+        locations_dct = {}
     
     api_object.event_hub.subscribe(
         'topic=ftrack.api.session.configure-location',
