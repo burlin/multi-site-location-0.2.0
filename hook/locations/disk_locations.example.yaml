@@ -1,0 +1,26 @@
+# Copy to disk_locations.yaml (ignored by git) and adjust paths.
+# Variables: USER_NAME (ftrack api user), HOST_NAME, HOME, FTRACK_LOCAL_STORAGE
+#
+#   copy hook\locations\disk_locations.example.yaml hook\locations\disk_locations.yaml
+#
+locations:
+    "{{ USER_NAME }}.local":
+        prefix:
+            # linux: "/mnt/proj"
+            win32: "{{ FTRACK_LOCAL_STORAGE }}"
+            # darwin: "/Volumes/proj"
+        priority: 1
+
+    "{{ USER_NAME }}.backup":
+        prefix:
+            # linux: "{{ HOME }}/ftrack_prj_backup"
+            win32: "{{ HOME }}\\ftrack_prj_backup"
+            # darwin: "{{ HOME }}/ftrack_prj_backup"
+        priority: 10
+
+    "x.local":
+        prefix:
+            # linux: "/mnt/server/proj"
+            win32: "X:\\proj"
+            # darwin: "/Volumes/server/proj"
+        priority: 100

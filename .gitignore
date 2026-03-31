@@ -9,6 +9,7 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+# Machine-specific; copy from disk_locations.example.yaml
 hook/locations/disk_locations.yaml
-/hook/locations/disk_locations.yaml
-/hook/locations/disk_locations.yaml
+
+/ftrack-connect-restart-win.bat
